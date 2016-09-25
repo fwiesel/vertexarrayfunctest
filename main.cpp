@@ -132,7 +132,7 @@ void configureShaders( osg::StateSet* stateSet )
 		"\n"
 		"void main()\n"
 		"{\n"
-		"	vColor = vec4( vec3(scale * (1.0/65535.0)), 1.);\n"
+		"	vColor = vec4( vec3(float(scale) * (1.0/65535.0)), 1.);\n"
 		"	gl_Position = osg_ModelViewProjectionMatrix * osg_Vertex;\n"
 		"}\n";
 	osg::Shader* vShader = new osg::Shader( osg::Shader::VERTEX, vertexSource );

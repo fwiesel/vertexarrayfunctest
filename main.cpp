@@ -6,6 +6,9 @@
 #include <osg/Program>
 #include <osg/Shader>
 
+#include <iostream>
+#include <thread>
+
 float random(float min,float max) { return min + (max-min)*float(rand())/float(RAND_MAX); }
 
 osg::Node* createScene(unsigned int nPoints);
@@ -24,6 +27,20 @@ public:
 private:
 	mutable GLuint _vertexArrayObject;
 };
+
+double calc_pi( unsigned long n )
+{
+	double pi = 4.0 , decimal = 1.0;
+	while( n > 2 ) {
+		decimal -= ( 1.0 / ( 2.0 * n + 1 ) );
+		--n;
+		decimal += ( 1.0 / ( 2.0 * n + 1 ) );
+		--n;
+	}
+	if( n > 0 )
+		decimal -= ( 1.0 / ( 2.0 * n + 1 ) );
+	return pi * decimal;
+}
 
 int main( int argc, char** argv )
 {
@@ -61,6 +78,7 @@ int main( int argc, char** argv )
 
 	viewer.setSceneData( root );
 	viewer.setRunFrameScheme(osgViewer::ViewerBase::ON_DEMAND);
+	viewer.setThreadingModel(osgViewer::ViewerBase::SingleThreaded);
 
 	// for non GL3/GL4 and non GLES2 platforms we need enable the osg_ uniforms that the shaders will use,
 	// you don't need thse two lines on GL3/GL4 and GLES2 specific builds as these will be enable by default.
@@ -70,7 +88,18 @@ int main( int argc, char** argv )
 	state->setUseModelViewAndProjectionUniforms(true);
 	state->setUseVertexAttributeAliasing(false);
 	state->setCheckForGLErrors(osg::State::ONCE_PER_ATTRIBUTE);
+	
+	viewer.realize();
+	
+	std::cout << "Start" << std::endl;
+	std::vector<std::thread> workers;
+	for (unsigned int i = 0; i < 4; ++i) {
+		double value;
+		workers.emplace_back([&value]() { value = calc_pi(1000000000ull); });
+	}
 
+	std::for_each(workers.begin(), workers.end(), [](std::thread &t) { t.join(); });
+	std::cout << "Done" << std::endl;
 	return viewer.run();
 }
 
